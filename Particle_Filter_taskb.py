@@ -3,16 +3,13 @@ import scipy.linalg
 import math
 import matplotlib.pyplot as plt
 
-# Particle Filter parameters
 num_particles = 100  # Number of particles
 simulation_time = 200.0 # Simulation time [s]
 time_step = 0.05 #ime step [s]
 
-# Motion Model parameters
 wheel_radius = 0.1  # [m]
 wheelbase = 0.3  # [m]
 
-# Single Landmark
 landmarks = np.array([[10.0, 10.0]])
 
 # Noise parameters
@@ -24,7 +21,6 @@ estimated_state = np.zeros((4, 1))
 true_state = np.zeros((4, 1))
 covariance = np.eye(4)
 
-# Particle store and weights
 particles = np.zeros((4, num_particles))  
 weights = np.zeros((1, num_particles)) + 1.0 / num_particles  
 
@@ -46,7 +42,6 @@ def simulate_observation(true_state, dead_reckoning_state, control_input):
         distance = math.sqrt(dx**2 + dy**2)
         angle = math.atan2(dy, dx) - true_state[2, 0]
         
-        # add noise to the measurements
         noisy_distance = distance + np.random.randn() * measurement_noise[0, 0]
         noisy_angle = angle + np.random.randn() * measurement_noise[1, 1]
         
@@ -54,7 +49,6 @@ def simulate_observation(true_state, dead_reckoning_state, control_input):
 
     measurements = np.array(measurements)
 
-    # use the true control input for the dead reckoning state
     dead_reckoning_state = calculate_motion(dead_reckoning_state, control_input)
 
     return true_state, measurements, dead_reckoning_state, control_input
@@ -88,7 +82,7 @@ def particle_filter_localization(particles, weights, estimated_state, covariance
     for i in range(num_particles):
         x = np.array([particles[:, i]]).T
         weight = 1
-        #  Predict with random input sampling
+        #  Predict
         ud1 = u[0, 0] + np.random.randn() * motion_noise[0, 0]
         ud2 = u[1, 0] + np.random.randn() * motion_noise[1, 1]
         ud = np.array([[ud1, ud2]]).T
@@ -168,7 +162,6 @@ def main():
     particle_weights = np.zeros((1, num_particles)) + 1.0 / num_particles  # Particle weight
     dead_reckoning = np.zeros((4, 1))  # Dead reckoning
 
-    # history
     estimated_state_history = estimated_state
     true_state_history = true_state
     dead_reckoning_history = true_state
@@ -181,7 +174,6 @@ def main():
 
         estimated_state, estimated_covariance, particles, particle_weights = particle_filter_localization(particles, particle_weights, estimated_state, estimated_covariance, z, noisy_control_input)
 
-        # store data history
         estimated_state_history = np.hstack((estimated_state_history, estimated_state))
         dead_reckoning_history = np.hstack((dead_reckoning_history, dead_reckoning))
         true_state_history = np.hstack((true_state_history, true_state))
@@ -201,11 +193,8 @@ def main():
             # Create a colormap
             cmap = plt.cm.get_cmap("jet")
         
-            # Plot the particles with color and size based on weight
-            # Plot the particles with color and size based on weight
             plt.scatter(particles[0, :], particles[1, :], c=cmap(weights.flatten()), s=weights.flatten() * 1000)
-
-        
+    
             plt.plot(np.array(true_state_history[0, :]).flatten(),
                      np.array(true_state_history[1, :]).flatten(), "-b")
             plt.plot(np.array(dead_reckoning_history[0, :]).flatten(),
